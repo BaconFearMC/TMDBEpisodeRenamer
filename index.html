@@ -48,6 +48,9 @@ input::placeholder{color:#66717f}
 .button:hover:not(:disabled){border-color:var(--blue);color:var(--blue)}
 .button:active:not(:disabled){transform:translateY(1px)}
 .zipwrap{position:relative;display:inline-flex;flex-direction:column;align-items:stretch;gap:6px}
+.dlbtns{display:flex;gap:14px;align-items:flex-start}
+.opt{display:flex;flex-direction:column;gap:4px;align-items:stretch}
+.opt small{font-size:11px;line-height:1.3;color:#8b95a3;text-align:center;max-width:230px}
 .zipprog{height:8px;background:var(--panel);border:2px solid var(--border-hi);overflow:hidden;display:none}
 .zipprog.on{display:block}
 .zipprog>i{display:block;height:100%;width:0;background:var(--blue);box-shadow:0 0 8px var(--blue)}
@@ -156,7 +159,7 @@ td:nth-child(3){color:var(--text)}
     <span class="tmdb">This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
     <span class="spacer"></span>
     <button class="button ghost" id="clearPreview">Clear Preview</button>
-    <span id="downloadArea" hidden><span class="zipwrap"><button class="button primary" id="zipBtn">Download approved files as ZIP</button><span class="zipprog" id="zipProg" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="zipProgFill"></i></span></span></span>
+    <span id="downloadArea" hidden><span class="zipwrap"><span class="dlbtns"><span class="opt"><button class="button primary" id="renameBtn">Rename files in place</button><small>Renames your local files directly. Fast, nothing to re-download.</small></span><span class="opt"><button class="button" id="zipBtn">Download approved files as ZIP</button><small>Takes longer: copies every file into a new ZIP.</small></span></span><span class="zipprog" id="zipProg" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="zipProgFill"></i></span></span></span>
   </footer>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -208,7 +211,38 @@ const tbody=$("previewTable").querySelector("tbody");matches.forEach(m=>{const t
 const ok=matches.filter(m=>m.status==="Matched").length,review=matches.length-ok,grp=matches.filter(m=>m.grouped).length;$("matchSummary").hidden=false;$("matchSummary").innerHTML=`<span class="summary-chip ok">${ok} matched</span>`+(grp?`<span class="summary-chip">${grp} grouped</span>`:"")+`<span class="summary-chip warn">${review} need review</span>`;$("downloadArea").hidden=ok===0;
 setStatus(grp?`Matching complete. ${grp} file(s) contain several episodes grouped together; TMDB recognizes episodes individually.`:"Matching complete. Review the proposed filenames below.","success")};
 $("includeTitles").onchange=()=>{if(matches.length)$("matchBtn").click()};
-$("zipBtn").onclick=async()=>{const approved=matches.filter(m=>m.status==="Matched"&&m.proposed);if(!approved.length)return;if(!window.JSZip){setStatus("ZIP library did not load. Refresh this page while connected to the internet and try again.","error");return}const btn=$("zipBtn");btn.disabled=true;btn.textContent="Preparing ZIP…";const prog=$("zipProg"),fill=$("zipProgFill");let shown=0,target=0,raf=0;const paint=()=>{shown+=(target-shown)*.25;if(target-shown<.2)shown=target;fill.style.width=shown+"%";prog.setAttribute("aria-valuenow",Math.round(shown));window.__zipProgress=shown/100;if(shown<target||target<100)raf=requestAnimationFrame(paint)};prog.classList.add("on");fill.style.width="0";window.__zipProgress=0;raf=requestAnimationFrame(paint);try{const zip=new JSZip();const usedNames=new Set();for(let i=0;i<approved.length;i++){const m=approved[i];let name=m.proposed;if(usedNames.has(name)){const dot=name.lastIndexOf(".");name=(dot>0?name.slice(0,dot):name)+` (${i+1})`+(dot>0?name.slice(dot):"")}usedNames.add(name);zip.file(name,m.file);target=Math.max(target,(i+1)/approved.length*10);setStatus(`Adding files to ZIP… ${i+1}/${approved.length}`);if(i%10===9)await new Promise(r=>setTimeout(r))}const blob=await zip.generateAsync({type:"blob"},meta=>{target=Math.max(target,10+meta.percent*.9);if(meta.percent%20<1)setStatus(`Building ZIP… ${Math.round(meta.percent)}%`)});target=100;await new Promise(r=>setTimeout(r,500));const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(selectedShow.name||"Renamed Episodes").replace(/[<>:"/\\|?*]/g,"-")+" - Renamed.zip";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);setStatus(`ZIP created with ${approved.length} renamed file(s). Your original files were not modified.`,"success")}catch(err){setStatus("ZIP creation failed: "+err.message,"error")}finally{setTimeout(()=>{cancelAnimationFrame(raf);prog.classList.remove("on");fill.style.width="0";window.__zipProgress=null},900);btn.disabled=false;btn.textContent="Download approved files as ZIP"}};
+$("zipBtn").onclick=async()=>{const approved=matches.filter(m=>m.status==="Matched"&&m.proposed);if(!approved.length)return;if(!window.JSZip){setStatus("ZIP library did not load. Refresh this page while connected to the internet and try again.","error");return}const btn=$("zipBtn");btn.disabled=true;$("renameBtn").disabled=true;btn.textContent="Preparing ZIP…";const prog=$("zipProg"),fill=$("zipProgFill");let shown=0,target=0,raf=0;const paint=()=>{shown+=(target-shown)*.25;if(target-shown<.2)shown=target;fill.style.width=shown+"%";prog.setAttribute("aria-valuenow",Math.round(shown));window.__zipProgress=shown/100;if(shown<target||target<100)raf=requestAnimationFrame(paint)};prog.classList.add("on");fill.style.width="0";window.__zipProgress=0;raf=requestAnimationFrame(paint);try{const zip=new JSZip();const usedNames=new Set();for(let i=0;i<approved.length;i++){const m=approved[i];let name=m.proposed;if(usedNames.has(name)){const dot=name.lastIndexOf(".");name=(dot>0?name.slice(0,dot):name)+` (${i+1})`+(dot>0?name.slice(dot):"")}usedNames.add(name);zip.file(name,m.file);target=Math.max(target,(i+1)/approved.length*10);setStatus(`Adding files to ZIP… ${i+1}/${approved.length}`);if(i%10===9)await new Promise(r=>setTimeout(r))}const blob=await zip.generateAsync({type:"blob"},meta=>{target=Math.max(target,10+meta.percent*.9);if(meta.percent%20<1)setStatus(`Building ZIP… ${Math.round(meta.percent)}%`)});target=100;await new Promise(r=>setTimeout(r,500));const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(selectedShow.name||"Renamed Episodes").replace(/[<>:"/\\|?*]/g,"-")+" - Renamed.zip";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);setStatus(`ZIP created with ${approved.length} renamed file(s). Your original files were not modified.`,"success")}catch(err){setStatus("ZIP creation failed: "+err.message,"error")}finally{setTimeout(()=>{cancelAnimationFrame(raf);prog.classList.remove("on");fill.style.width="0";window.__zipProgress=null},900);btn.disabled=false;$("renameBtn").disabled=false;btn.textContent="Download approved files as ZIP"}};
+
+/* Rename approved files in place (File System Access API) */
+if(!window.showDirectoryPicker){$("renameBtn").disabled=true;$("renameBtn").title="Needs a Chromium browser (Chrome, Edge, Brave). Use the ZIP option instead."}
+$("renameBtn").onclick=async()=>{const approved=matches.filter(m=>m.status==="Matched"&&m.proposed);if(!approved.length)return;
+if(!window.showDirectoryPicker){setStatus("In-place renaming needs Chrome, Edge or another Chromium browser. Use the ZIP option instead.","error");return}
+let root;try{root=await showDirectoryPicker({mode:"readwrite"})}catch(e){return}
+const btn=$("renameBtn"),zbtn=$("zipBtn"),prog=$("zipProg"),fill=$("zipProgFill");btn.disabled=true;zbtn.disabled=true;btn.textContent="Renaming…";
+let shown=0,target=0,raf=0;const paint=()=>{shown+=(target-shown)*.25;if(target-shown<.2)shown=target;fill.style.width=shown+"%";prog.setAttribute("aria-valuenow",Math.round(shown));window.__zipProgress=shown/100;if(shown<target||target<100)raf=requestAnimationFrame(paint)};
+prog.classList.add("on");fill.style.width="0";window.__zipProgress=0;raf=requestAnimationFrame(paint);
+let done=0;const failed=[];const replaced=new Map();
+const dirAt=async(base,parts,create)=>{let d=base;for(const p of parts)d=await d.getDirectoryHandle(p,{create});return d};
+const exists=async(d,n)=>{try{await d.getFileHandle(n);return true}catch(e){return false}};
+try{for(let i=0;i<approved.length;i++){const m=approved[i];const f=m.file;
+try{const rel=f.webkitRelativePath?f.webkitRelativePath.split("/"):[f.name];const name=rel[rel.length-1];let srcDir,fh;
+const tries=[rel.slice(1,-1),rel.slice(0,-1)];let found=false;
+for(const t of tries){try{srcDir=await dirAt(root,t,false);fh=await srcDir.getFileHandle(name);found=true;break}catch(e){}}
+if(!found)throw new Error("not found in the chosen folder");
+const segs=m.proposed.split("/").filter(Boolean);let newName=segs.pop();const destDir=await dirAt(root,segs,true);
+if(await destDir.isSameEntry(srcDir)&&newName===name){done++;target=(i+1)/approved.length*100;continue}
+if(await exists(destDir,newName)){const dot=newName.lastIndexOf(".");const b=dot>0?newName.slice(0,dot):newName,x=dot>0?newName.slice(dot):"";let n=2;while(await exists(destDir,`${b} (${n})${x}`))n++;newName=`${b} (${n})${x}`}
+let moved=false;if(typeof fh.move==="function"){try{await fh.move(destDir,newName);moved=true}catch(e){}}
+if(!moved){const nf=await destDir.getFileHandle(newName,{create:true});const w=await nf.createWritable();await w.write(await fh.getFile());await w.close();await srcDir.removeEntry(name)}
+replaced.set(f,await(await destDir.getFileHandle(newName)).getFile());done++}
+catch(err){failed.push((f.webkitRelativePath||f.name)+": "+err.message)}
+target=(i+1)/approved.length*100}
+target=100;await new Promise(r=>setTimeout(r,500));
+selectedFiles=selectedFiles.map(f=>replaced.get(f)||f);renderFiles();clearMatchView();$("matchBtn").disabled=selectedFiles.length===0||episodes.length===0;
+if(failed.length)setStatus(`Renamed ${done} file(s); ${failed.length} failed. ${failed[0]}${failed.length>1?" (and more)":""}. If files weren't found, pick the folder that contains them.`,"error");
+else setStatus(`Renamed ${done} file(s) in place. Click Match again to re-check them.`,"success")}
+catch(err){setStatus("Renaming failed: "+err.message,"error")}
+finally{setTimeout(()=>{cancelAnimationFrame(raf);prog.classList.remove("on");fill.style.width="0";window.__zipProgress=null},900);btn.disabled=!window.showDirectoryPicker;zbtn.disabled=false;btn.textContent="Rename files in place"}};
 
 /* Snake that circles the window border */
 (function(){const cv=$("snake"),cx=cv.getContext("2d");let W=0,H=0,dpr=1,d=0,last=0,mult=1;const INSET=9,GAP=15,LEN=56,SPEED=matchMedia("(prefers-reduced-motion: reduce)").matches?0:280;
