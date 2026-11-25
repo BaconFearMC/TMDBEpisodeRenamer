@@ -233,19 +233,22 @@ $("includeTitles").onchange=()=>{if(matches.length)$("matchBtn").click()};
 
 /* Remember the chosen folder so renaming never has to ask for it again */
 let rootHandle=null;
+const FS_OK=(()=>{try{return !!window.showDirectoryPicker&&window.top===window.self}catch(e){return false}})();
 const dirAt=async(base,parts,create)=>{let d=base;for(const p of parts)d=await d.getDirectoryHandle(p,{create});return d};
 async function resolveFile(root,f){const rel=f.webkitRelativePath?f.webkitRelativePath.split("/"):[f.name];const name=rel[rel.length-1];for(const t of [rel.slice(1,-1),rel.slice(0,-1)]){try{const srcDir=await dirAt(root,t,false);const fh=await srcDir.getFileHandle(name);return{srcDir,fh,name}}catch(e){}}return null}
 function tagPath(f,root,segs){try{Object.defineProperty(f,"webkitRelativePath",{value:[root.name,...segs].join("/"),configurable:true})}catch(e){}}
-$("browseFolder").addEventListener("click",async e=>{if(!window.showDirectoryPicker)return;e.preventDefault();
-let root;try{root=await showDirectoryPicker({mode:"readwrite"})}catch(err){if(err&&err.name!=="AbortError")setStatus("Could not open folder: "+err.message,"error");return}
-setStatus("Reading folder…");const files=[];
-async function walk(dir,path){for await(const [name,h] of dir.entries()){if(h.kind==="directory")await walk(h,path.concat(name));else if(EXTENSIONS.has(fileExt(name))){const f=await h.getFile();tagPath(f,root,path.concat(name));files.push(f)}}}
+$("browseFolder").addEventListener("click",async e=>{if(!FS_OK)return;e.preventDefault();
+let root;try{root=await showDirectoryPicker({mode:"readwrite"})}catch(err){if(err&&err.name==="AbortError")return;$("folderInput").click();return}
+setStatus("Reading folder…");const files=[];let skipped=0;
+async function walk(dir,path){let list=[];try{for await(const [name,h] of dir.entries())list.push([name,h])}catch(err){skipped++;return}
+for(const [name,h] of list){if(h.kind==="directory"){await walk(h,path.concat(name))}else if(EXTENSIONS.has(fileExt(name))){try{const f=await h.getFile();tagPath(f,root,path.concat(name));files.push(f);if(files.length%50===0)setStatus(`Reading folder… ${files.length} video file(s) found`)}catch(err){skipped++}}}}
 try{await walk(root,[])}catch(err){setStatus("Could not read folder: "+err.message,"error");return}
-rootHandle=root;addFiles(files);setStatus(files.length?`${files.length} video file(s) loaded from "${root.name}". Renaming in place won't ask for the folder again.`:`No video files found in "${root.name}".`,files.length?"":"error")});
+rootHandle=root;addFiles(files);
+setStatus(files.length?`${files.length} video file(s) loaded from "${root.name}" (including subfolders). Renaming in place won't ask for the folder again.`+(skipped?` ${skipped} item(s) could not be read.`:""):`No video files found in "${root.name}".`,files.length?"":"error")});
 
 /* ---- Output method: rename in place (recommended) or ZIP ---- */
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const canRename=!!window.showDirectoryPicker;
+const canRename=FS_OK;
 let mode=canRename?"rename":"zip",busy=false;
 const act=$("actionBtn"),modeEl=$("dlMode"),noteEl=$("modeNote");
 function updateUI(){modeEl.dataset.mode=mode;modeEl.querySelectorAll(".seg").forEach(b=>{const on=b.dataset.mode===mode;b.classList.toggle("active",on);b.setAttribute("aria-checked",on);b.disabled=busy||(b.dataset.mode==="rename"&&!canRename)});
@@ -269,7 +272,7 @@ fail(text){end(text,"err")}}})();
 
 /* ---- Rename approved files in place (File System Access API) ---- */
 async function runRename(){const approved=matches.filter(m=>m.status==="Matched"&&m.proposed);if(!approved.length)return;
-if(!window.showDirectoryPicker){setStatus("In-place renaming needs Chrome, Edge or another Chromium browser. Use the ZIP option instead.","error");return}
+if(!FS_OK){setStatus("In-place renaming needs Chrome, Edge or another Chromium browser. Use the ZIP option instead.","error");return}
 let root=rootHandle;
 if(root){try{let p=await root.queryPermission({mode:"readwrite"});if(p!=="granted")p=await root.requestPermission({mode:"readwrite"});if(p!=="granted")root=null}catch(e){root=null}}
 if(root){for(const m of approved){if(!await resolveFile(root,m.file)){root=null;break}}}
