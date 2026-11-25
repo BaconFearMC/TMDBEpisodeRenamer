@@ -10,10 +10,88 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<style>
+*{box-sizing:border-box}
+:root{--bg:#12161d;--panel:#1a2029;--chip:#222a36;--border:#2f3948;--border-hi:#435066;--blue:#4f9bff;--blue-deep:#2a5fb0;--text:#dcdfe5;--dim:#9aa4b2;--green:#4fd68a;--amber:#e0a94a;--red:#ff6b6b;--ink:rgba(0,0,0,.5);--cut:8px;--font:"Fredoka One","Segoe UI",system-ui,sans-serif;--read:Inter,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
+html,body{height:100%;overflow:hidden;margin:0}
+body{margin:0;background:var(--bg) radial-gradient(rgba(255,255,255,.035) 1px,transparent 1px) 0 0/26px 26px;color:var(--text);font:14px/1.4 var(--font)}
+#snake{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;display:block}
+.frame{position:fixed;inset:8px;border:2px solid #1f3552;pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;height:100vh;height:100dvh;max-width:1240px;margin:auto;padding:30px 34px 28px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.hero{text-align:center}
+.eyebrow{display:flex;align-items:center;justify-content:center;gap:14px;font-size:20px;letter-spacing:.28em;text-transform:uppercase;color:var(--blue)}
+.eyebrow::before,.eyebrow::after{content:"";width:9px;height:9px;background:var(--blue);transform:rotate(45deg)}
+.hint{margin:4px 0 0;font-size:13px;color:var(--dim)}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.panel{background:var(--panel);border:2px solid var(--border);padding:12px 16px 16px;display:flex;flex-direction:column;gap:10px;box-shadow:3px 4px 0 var(--ink)}
+h2{margin:0;font-size:12px;font-weight:400;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:12px}
+h2::before{content:"";width:7px;height:7px;background:var(--blue);transform:rotate(45deg)}
+h2::after{content:"";flex:1;height:1px;background:var(--border)}
+.row{display:flex;align-items:center;gap:10px}
+.keyrow{display:flex;align-items:center;gap:10px}
+.keyrow label{font-size:13px;color:var(--dim);white-space:nowrap}
+.keyrow a{font-size:12px;white-space:nowrap;color:var(--blue)}
+.searchline{display:flex;gap:10px;align-items:stretch}
+.sbox{flex:1;min-width:0;filter:drop-shadow(2px 3px 0 var(--ink))}
+.sbox-in{display:flex;align-items:center;gap:10px;height:100%;padding:0 14px;background:var(--bg);border:3px solid var(--border-hi);border-bottom-width:4px;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);transition:border-color .15s}
+.sbox-in:focus-within{border-color:var(--blue)}
+.sbox svg{width:22px;height:22px;max-width:22px;flex:none;color:var(--blue)}
+.sbox input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:19px;padding:9px 0}
+input[type=text],input[type=password],select{background:var(--bg);border:2px solid var(--border-hi);border-bottom-width:3px;color:var(--text);padding:8px 12px;font:14px var(--font);outline:none;min-width:0;transition:border-color .15s}
+input[type=text],input[type=password]{flex:1}
+select{flex:1;cursor:pointer}
+input:focus,select:focus{border-color:var(--blue)}
+input[type=file]{display:none}
+input::placeholder{color:#66717f}
+#folderPath{width:100%;cursor:default}
+.button{font:inherit;font-size:13px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:9px 16px;color:var(--text);background:var(--panel);border:2px solid var(--border-hi);border-bottom-width:3px;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut));transition:transform .08s,border-color .12s,color .12s,filter .12s}
+.button:hover:not(:disabled){border-color:var(--blue);color:var(--blue)}
+.button:active:not(:disabled){transform:translateY(1px)}
+.button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.button:disabled{opacity:.4;cursor:not-allowed}
+.button.ghost{background:none}
+.button.primary{background:var(--blue);color:#0c1626;border-color:var(--blue-deep)}
+.button.primary:hover:not(:disabled){color:#0c1626;border-color:#a9cdff;filter:brightness(1.08)}
+.searchline .button{padding:0 22px;font-size:14px}
+.wide{width:100%;padding:11px}
+.check{display:flex;align-items:center;gap:12px;cursor:pointer;font-size:13px}
+.check input{appearance:none;width:16px;height:16px;margin:0 3px;border:2px solid var(--border-hi);transform:rotate(45deg) scale(.85);cursor:pointer;transition:all .12s}
+.check input:checked{background:var(--blue);border-color:var(--blue)}
+.check input:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.statusrow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:26px}
+.progress{min-width:0;font-size:13px;color:var(--dim);display:flex;align-items:center;gap:10px}
+.progress::before{content:"";width:7px;height:7px;flex:none;background:var(--dim);transform:rotate(45deg)}
+.progress.error{color:var(--red)}.progress.error::before{background:var(--red)}
+.progress.success{color:var(--green)}.progress.success::before{background:var(--green)}
+.results-summary{display:flex;gap:6px;flex-wrap:wrap;font-size:12px;flex:none}
+.summary-chip{padding:3px 10px;background:var(--chip);border:1px solid var(--border-hi);color:var(--dim)}
+.summary-chip.ok{color:var(--green);border-color:#2b4a37;background:#1e3327}
+.summary-chip.warn{color:var(--amber);border-color:#55431f;background:#3a2e17}
+.table-wrap{flex:1;min-height:0;overflow:auto;border:2px solid var(--border);background:var(--panel);position:relative;box-shadow:3px 4px 0 var(--ink);scrollbar-width:thin;scrollbar-color:var(--border-hi) transparent;transition:border-color .12s}
+.table-wrap.drag{border-color:var(--blue);background:#172338}
+.table-wrap:has(tbody:empty)::after{content:"Drop video files here to preview renames";position:absolute;inset:40px 0 0;display:grid;place-items:center;color:#66717f;pointer-events:none}
+table{border-collapse:collapse;width:100%;table-layout:fixed}
+th{position:sticky;top:0;background:var(--chip);text-align:left;font-weight:400;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);padding:9px 10px;border-bottom:2px solid var(--border)}
+th:first-child,td:first-child{width:96px}
+td{padding:8px 10px;border-top:1px solid var(--border);color:#b7c0cd;vertical-align:top;overflow-wrap:anywhere;font:12.5px var(--read)}
+tbody tr:first-child td{border-top:0}
+tbody tr:hover{background:rgba(79,155,255,.07)}
+td:nth-child(3){color:var(--text)}
+.badge{display:inline-block;padding:2px 9px;font:12px var(--font);letter-spacing:.05em;border:1px solid}
+.badge.matched{color:var(--green);background:#1e3327;border-color:#2b4a37}
+.badge.review{color:var(--amber);background:#3a2e17;border-color:#55431f}
+.bottombar{display:flex;align-items:center;gap:12px}
+.spacer{flex:1}
+.tmdb{font-size:11px;color:#66717f}
+@media(max-height:720px){.hint{display:none}.app{gap:10px}.panel{padding:10px 14px 12px;gap:8px}}
+@media(max-width:900px){.panels{grid-template-columns:1fr}.hint,.tmdb{display:none}}
+@media(max-width:720px){.table-wrap{min-height:140px}.eyebrow{font-size:16px;letter-spacing:.18em}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
 </head>
 <body>
-<canvas id="snake" aria-hidden="true"></canvas>
+<div class="frame" aria-hidden="true"></div>
+<canvas id="snake" aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0"></canvas>
 <div class="app">
   <header class="hero">
     <div class="eyebrow">TMDB Episode Renamer</div>
@@ -24,13 +102,13 @@
     <section class="panel">
       <h2>Find the show</h2>
       <div class="keyrow">
-        <label for="apiKey">API key</label>
-        <input id="apiKey" type="password" placeholder="TMDB API key or read access token" autocomplete="off">
-        <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">Get a key</a>
+        <label for="apiKey">Read Access Token</label>
+        <input id="apiKey" type="password" placeholder="Paste your TMDB API Read Access Token" autocomplete="off">
+        <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">Where to find it</a>
       </div>
       <div class="searchline">
         <div class="sbox"><div class="sbox-in">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
           <input id="showSearch" type="search" placeholder="Search for a TV show" autocomplete="off" aria-label="Show name">
         </div></div>
         <button class="button primary" id="searchBtn">Search TMDB</button>
@@ -57,7 +135,7 @@
   </div>
 
   <div class="statusrow">
-    <div class="progress" id="status" role="status">Enter your TMDB API key, search for a show, choose your files, then scan.</div>
+    <div class="progress" id="status" role="status">Paste your TMDB API Read Access Token (the long one, not the short API Key), then search for a show.</div>
     <div class="results-summary" id="matchSummary" hidden></div>
   </div>
 
@@ -76,6 +154,50 @@
   </footer>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="app.js"></script>
+<script>
+const EXTENSIONS = new Set([".mkv",".mp4",".avi",".mov",".wmv",".m4v",".ts",".webm",".mpg",".mpeg"]);
+const $ = id => document.getElementById(id);
+let selectedFiles=[], searchShows=[], selectedShow=null, episodes=[], matches=[];
+function fileExt(name){const i=name.lastIndexOf(".");return i<0?"":name.slice(i).toLowerCase()}
+function fmtBytes(n){if(n<1024)return n+" B";if(n<1024*1024)return (n/1024).toFixed(1)+" KB";return (n/1024/1024).toFixed(1)+" MB"}
+function setStatus(message,type=""){const el=$("status");el.textContent=message;el.className="progress "+type}
+function clearMatchView(){matches=[];$("previewTable").querySelector("tbody").innerHTML=""; $("matchSummary").hidden=true;$("downloadArea").hidden=true}
+function addFiles(fileList){const incoming=[...fileList].filter(f=>EXTENSIONS.has(fileExt(f.name)));const seen=new Set(selectedFiles.map(f=>f.name+"|"+f.size+"|"+f.lastModified));for(const f of incoming){const key=f.name+"|"+f.size+"|"+f.lastModified;if(!seen.has(key)){selectedFiles.push(f);seen.add(key)}}renderFiles();clearMatchView();$("matchBtn").disabled=selectedFiles.length===0||episodes.length===0}
+function renderFiles(){const n=selectedFiles.length;$("folderPath").value=n?`${n} video file(s) selected · ${fmtBytes(selectedFiles.reduce((a,f)=>a+f.size,0))}`:""}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+$("fileInput").addEventListener("change",e=>{addFiles(e.target.files);e.target.value=""});
+$("folderInput").addEventListener("change",e=>{addFiles(e.target.files);e.target.value=""});
+$("clearFiles").onclick=()=>{selectedFiles=[];renderFiles();clearMatchView();$("matchBtn").disabled=true};
+const dz=$("dropzone");["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag")}));["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag")}));dz.addEventListener("drop",e=>addFiles(e.dataTransfer.files));
+async function tmdb(url){let key=$("apiKey").value.trim().replace(/^["']|["']$/g,"").replace(/^Bearer\s+/i,"");if(!key)throw new Error("Enter your TMDB API key first.");const isToken=key.length>40;const opts={headers:{accept:"application/json"}};if(isToken)opts.headers.Authorization="Bearer "+key;else url+=(url.includes("?")?"&":"?")+"api_key="+encodeURIComponent(key);let res;const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),15000);opts.signal=ctl.signal;try{res=await fetch(url,opts)}catch(e){throw new Error(e&&e.name==="AbortError"?"TMDB did not respond within 15 seconds. Check your connection and try again.":"Could not reach TMDB. Check your internet connection or any ad/privacy blocker.")}finally{clearTimeout(to)}if(!res.ok){let detail="";try{const j=await res.json();detail=j.status_message||""}catch{}if(res.status===401)throw new Error("TMDB rejected that key (401). Use the long API Read Access Token (not the short API Key) from themoviedb.org/settings/api. "+detail);throw new Error(`TMDB request failed (${res.status}) ${detail}`)}return res.json()}
+$("searchBtn").onclick=async()=>{const q=$("showSearch").value.trim();if(!q){setStatus("Enter a show name to search.");return} $("searchBtn").disabled=true;$("results").innerHTML="";selectedShow=null;$("loadEpisodesBtn").disabled=true;setStatus("Searching TMDB…");try{const data=await tmdb("https://api.themoviedb.org/3/search/tv?query="+encodeURIComponent(q));searchShows=data.results||[];if(!searchShows.length){setStatus("No TV shows found.");return}searchShows=searchShows.slice(0,12);searchShows.forEach((show,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`${show.name||"Untitled"} (${(show.first_air_date||"").slice(0,4)||"year unknown"})`;$("results").appendChild(o)});chooseShow(0);setStatus(`${searchShows.length} result(s). Choose the correct series.`)}catch(err){setStatus(err.message,"error")}finally{$("searchBtn").disabled=false}};
+function chooseShow(i){selectedShow=searchShows[i]||null;$("results").value=i;$("loadEpisodesBtn").disabled=!selectedShow}
+$("results").addEventListener("change",e=>chooseShow(Number(e.target.value)));
+$("clearPreview").onclick=clearMatchView;
+$("showSearch").addEventListener("keydown",e=>{if(e.key==="Enter")$("searchBtn").click()});
+$("loadEpisodesBtn").onclick=async()=>{if(!selectedShow)return;$("loadEpisodesBtn").disabled=true;setStatus(`Loading episode list for ${selectedShow.name}…`);try{const detail=await tmdb(`https://api.themoviedb.org/3/tv/${selectedShow.id}`);const seasonList=(detail.seasons||[]).filter(s=>Number(s.season_number)>=0);let loaded=[];for(const s of seasonList){setStatus(`Loading season ${s.season_number}…`);const season=await tmdb(`https://api.themoviedb.org/3/tv/${selectedShow.id}/season/${s.season_number}`);(season.episodes||[]).forEach(ep=>loaded.push({season:Number(ep.season_number??s.season_number),episode:Number(ep.episode_number||0),title:ep.name||""}))}episodes=loaded;clearMatchView();$("matchBtn").disabled=selectedFiles.length===0;setStatus(`Loaded ${episodes.length} episodes for ${selectedShow.name}. Ready to match.`,`success`)}catch(err){setStatus(err.message,"error")}finally{$("loadEpisodesBtn").disabled=false}};
+function normalize(text){text=String(text||"").toLowerCase().replace(/\[[^\]]*\]|\([^)]*\)/g," ");text=text.replace(/\b(1080p|720p|2160p|480p|web[- ]?dl|web[- ]?rip|bluray|blu[- ]?ray|hdtv|x264|x265|hevc|av1|aac|proper|repack)\b/g," ");text=text.replace(/[^a-z0-9]+/g," ");return text.trim().split(/\s+/).filter(Boolean).join(" ")}
+function parseFilename(name){const stem=name.replace(/\.[^.]+$/,"");let m=stem.match(/\bS(\d{1,2})\s*E(\d{1,3})\b/i);if(!m)m=stem.match(/\b(\d{1,2})x(\d{1,3})\b/i);let season=m?Number(m[1]):null,episode=m?Number(m[2]):null;let title=stem;if(m)title=stem.slice(m.index+m[0].length);title=title.replace(/^[\s._-]+/,"").replace(/^(episode\s*)?\d{1,3}\s*[-._ ]+/i,"").trim();return{season,episode,title}}
+function ratio(a,b){if(a===b)return 1;if(!a||!b)return 0;let prev=Array(b.length+1).fill(0);for(let i=1;i<=a.length;i++){let curr=[0];for(let j=1;j<=b.length;j++)curr[j]=a[i-1]===b[j-1]?prev[j-1]+1:Math.max(prev[j],curr[j-1]);prev=curr}return (2*prev[b.length])/(a.length+b.length)}
+function similarity(a,b){let r=ratio(a,b);if(a===b)r=1;if(a.includes(b)||b.includes(a))r=Math.max(r,Math.min(a.length,b.length)/Math.max(a.length,b.length));return r}
+function sanitizeFilename(s){return s.replace(/[<>:"/\\|?*]/g,"-").replace(/[\x00-\x1f]/g,"").replace(/[ .]+$/,"")}
+function basename(path){return path.split(/[\\/]/).pop()}
+function proposedPath(file,filename){const rel=file.webkitRelativePath||file.name;const dir=rel.includes("/")?rel.slice(0,rel.lastIndexOf("/")+1):"";return dir+filename}
+$("matchBtn").onclick=()=>{if(!selectedFiles.length||!episodes.length)return;clearMatchView();let used=new Set();matches=selectedFiles.map(file=>{const parsed=parseFilename(file.name),ntitle=normalize(parsed.title);let best=null,score=0;if(ntitle){for(const ep of episodes){const k=ep.season+"-"+ep.episode;if(used.has(k))continue;const candidate=normalize(ep.title);if(!candidate)continue;const r=similarity(ntitle,candidate);if(r>score){score=r;best=ep}}}const status=best&&score>=.72?"Matched":"Review";let proposed="",matchText="";if(status==="Matched"){used.add(best.season+"-"+best.episode);const titlepart=$("includeTitles").checked&&best.title?` - ${best.title}`:"";proposed=sanitizeFilename(`${selectedShow.name} - S${String(best.season).padStart(2,"0")}E${String(best.episode).padStart(2,"0")}${titlepart}`)+fileExt(file.name);matchText=`S${String(best.season).padStart(2,"0")}E${String(best.episode).padStart(2,"0")} ${best.title} (${Math.round(score*100)}%)`}else{matchText=parsed.season!==null?`Filename number S${String(parsed.season).padStart(2,"0")}E${String(parsed.episode).padStart(2,"0")}; title not confident`:"No episode title/number detected"}return{file,status,proposed,matchText,episode:status==="Matched"?best:null,score}});
+const tbody=$("previewTable").querySelector("tbody");matches.forEach(m=>{const tr=document.createElement("tr");tr.innerHTML=`<td><span class="badge ${m.status.toLowerCase()}">${m.status}</span></td><td>${escapeHtml(m.file.webkitRelativePath||m.file.name)}</td><td>${m.proposed?escapeHtml(proposedPath(m.file,m.proposed)):"—"}</td><td>${escapeHtml(m.matchText)}</td>`;tbody.appendChild(tr)});const ok=matches.filter(m=>m.status==="Matched").length,review=matches.length-ok;$("matchSummary").hidden=false;$("matchSummary").innerHTML=`<span class="summary-chip ok">${ok} confident match(es)</span><span class="summary-chip warn">${review} file(s) need review</span><span class="summary-chip">${matches.length} total</span>`;$("downloadArea").hidden=ok===0;setStatus("Matching complete. Review the proposed filenames below.", "success")};
+$("includeTitles").onchange=()=>{if(matches.length)$("matchBtn").click()};
+$("zipBtn").onclick=async()=>{const approved=matches.filter(m=>m.status==="Matched"&&m.proposed);if(!approved.length)return;if(!window.JSZip){setStatus("ZIP library did not load. Refresh this page while connected to the internet and try again.","error");return}const btn=$("zipBtn");btn.disabled=true;btn.textContent="Preparing ZIP…";try{const zip=new JSZip();const usedNames=new Set();for(let i=0;i<approved.length;i++){const m=approved[i];let name=proposedPath(m.file,m.proposed);if(usedNames.has(name)){const dot=name.lastIndexOf(".");name=(dot>0?name.slice(0,dot):name)+` (${i+1})`+(dot>0?name.slice(dot):"")}usedNames.add(name);zip.file(name,m.file);setStatus(`Adding files to ZIP… ${i+1}/${approved.length}`)}const blob=await zip.generateAsync({type:"blob"},meta=>{if(meta.percent%20<1)setStatus(`Building ZIP… ${Math.round(meta.percent)}%`)});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(selectedShow.name||"Renamed Episodes").replace(/[<>:"/\\|?*]/g,"-")+" - Renamed.zip";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);setStatus(`ZIP created with ${approved.length} renamed file(s). Your original files were not modified.`,"success")}catch(err){setStatus("ZIP creation failed: "+err.message,"error")}finally{btn.disabled=false;btn.textContent="Download approved files as ZIP"}};
+
+/* Snake that circles the window border */
+(function(){const cv=$("snake"),cx=cv.getContext("2d");let W=0,H=0,dpr=1,d=0,last=0;const INSET=9,GAP=15,LEN=56,SPEED=matchMedia("(prefers-reduced-motion: reduce)").matches?0:280;
+function size(){dpr=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0)}
+function at(t){const w=W-INSET*2,h=H-INSET*2,P=2*(w+h);t=((t%P)+P)%P;if(t<w)return{x:INSET+t,y:INSET};t-=w;if(t<h)return{x:W-INSET,y:INSET+t};t-=h;if(t<w)return{x:W-INSET-t,y:H-INSET};t-=w;return{x:INSET,y:H-INSET-t}}
+function dia(x,y,r,fill,a){cx.globalAlpha=a;cx.fillStyle=fill;cx.beginPath();cx.moveTo(x,y-r);cx.lineTo(x+r,y);cx.lineTo(x,y+r);cx.lineTo(x-r,y);cx.closePath();cx.fill()}
+function frame(ts){const dt=Math.min(.05,(ts-(last||ts))/1000);last=ts;d+=SPEED*dt;cx.clearRect(0,0,W,H);const P=2*((W-INSET*2)+(H-INSET*2));
+for(let t=0;t<P;t+=30){const p=at(t);dia(p.x,p.y,2.2,"#4f9bff",.16)}
+for(let i=LEN-1;i>=0;i--){const p=at(d-i*GAP),f=1-i/LEN;dia(p.x,p.y,3+f*6,i===0?"#cfe4ff":"#4f9bff",.25+f*.75)}
+const hd=at(d);cx.globalAlpha=1;cx.fillStyle="#12161d";cx.fillRect(hd.x-1.5,hd.y-1.5,3,3);requestAnimationFrame(frame)}
+addEventListener("resize",size);size();requestAnimationFrame(frame)})();
+</script>
 </body>
 </html>
