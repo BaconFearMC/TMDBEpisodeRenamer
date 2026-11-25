@@ -15,42 +15,49 @@
 <body>
 <canvas id="snake" aria-hidden="true"></canvas>
 <div class="app">
-  <header class="titlebar">
-    <span class="brand">TMDB Episode Renamer</span>
-    <span class="privacy"><span class="green-dot"></span>Runs locally in your browser. Files are never uploaded.</span>
+  <header class="hero">
+    <div class="eyebrow">TMDB Episode Renamer</div>
+    <p class="hint">Match your files to TMDB episodes, review the new names, then download renamed copies. Nothing is uploaded.</p>
   </header>
 
-  <div class="row">
-    <label for="apiKey">TMDB API key:</label>
-    <input id="apiKey" type="password" placeholder="Paste your TMDB API key" autocomplete="off">
-    <span class="note">Used only on this page and never saved. <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">Get a key</a></span>
+  <div class="panels">
+    <section class="panel">
+      <h2>Find the show</h2>
+      <div class="keyrow">
+        <label for="apiKey">API key</label>
+        <input id="apiKey" type="password" placeholder="TMDB API key or read access token" autocomplete="off">
+        <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">Get a key</a>
+      </div>
+      <div class="searchline">
+        <div class="sbox"><div class="sbox-in">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+          <input id="showSearch" type="search" placeholder="Search for a TV show" autocomplete="off" aria-label="Show name">
+        </div></div>
+        <button class="button primary" id="searchBtn">Search TMDB</button>
+      </div>
+      <div class="row">
+        <select id="results" aria-label="Search results"></select>
+        <button class="button" id="loadEpisodesBtn" disabled>Load Episodes</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Choose video files</h2>
+      <input id="folderPath" type="text" readonly placeholder="No files selected. You can also drop files on the table." aria-label="Selected files">
+      <div class="row">
+        <label class="button" for="folderInput">Browse folder</label>
+        <label class="button" for="fileInput">Choose files</label>
+        <button class="button ghost" id="clearFiles">Clear</button>
+      </div>
+      <label class="check"><input type="checkbox" id="includeTitles" checked> Include TMDB episode titles in filenames</label>
+      <button class="button primary wide" id="matchBtn" disabled>Scan &amp; Match</button>
+      <input type="file" id="fileInput" multiple accept=".mkv,.mp4,.avi,.mov,.wmv,.m4v,.ts,.webm,.mpg,.mpeg,video/*">
+      <input type="file" id="folderInput" multiple webkitdirectory directory>
+    </section>
   </div>
 
-  <fieldset>
-    <legend>1. Find the show on TMDB</legend>
-    <div class="row">
-      <input id="showSearch" type="search" placeholder="Show name" autocomplete="off" aria-label="Show name">
-      <button class="button" id="searchBtn">Search TMDB</button>
-      <select id="results" aria-label="Search results"></select>
-      <button class="button" id="loadEpisodesBtn" disabled>Load Episodes</button>
-    </div>
-  </fieldset>
-
-  <fieldset>
-    <legend>2. Choose your video files</legend>
-    <div class="row">
-      <input id="folderPath" type="text" readonly placeholder="No files selected. Drop files onto the table below, or browse." aria-label="Selected files">
-      <label class="button" for="folderInput">Browse folder</label>
-      <label class="button" for="fileInput">Choose files</label>
-      <button class="button" id="clearFiles">Clear</button>
-      <button class="button primary" id="matchBtn" disabled>Scan &amp; Match</button>
-    </div>
-    <input type="file" id="fileInput" multiple accept=".mkv,.mp4,.avi,.mov,.wmv,.m4v,.ts,.webm,.mpg,.mpeg,video/*">
-    <input type="file" id="folderInput" multiple webkitdirectory directory>
-  </fieldset>
-
-  <div class="row options">
-    <label class="check"><input type="checkbox" id="includeTitles" checked> Include TMDB episode titles in renamed files</label>
+  <div class="statusrow">
+    <div class="progress" id="status" role="status">Enter your TMDB API key, search for a show, choose your files, then scan.</div>
     <div class="results-summary" id="matchSummary" hidden></div>
   </div>
 
@@ -61,10 +68,10 @@
     </table>
   </div>
 
-  <footer class="statusbar">
-    <div class="progress" id="status" role="status">Enter your TMDB API key, search for a show, choose your files, then scan.</div>
-    <span class="tmdb">Uses the TMDB API; not endorsed or certified by TMDB.</span>
-    <button class="button" id="clearPreview">Clear Preview</button>
+  <footer class="bottombar">
+    <span class="tmdb">This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
+    <span class="spacer"></span>
+    <button class="button ghost" id="clearPreview">Clear Preview</button>
     <span id="downloadArea" hidden><button class="button primary" id="zipBtn">Download approved files as ZIP</button></span>
   </footer>
 </div>
