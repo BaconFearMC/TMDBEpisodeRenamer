@@ -4,15 +4,6 @@ This is a browser-based version of TMDB Episode Renamer for GitHub Pages. Users 
 
 **Files are processed in the user's browser. Video files are not uploaded to a server, and originals are never modified.** The TMDB API key is entered by the user and kept in page memory only (not stored).
 
-## Publish to GitHub Pages
-
-1. Create a repository.
-2. Upload all package contents to the repository root.
-3. Go to repository **Settings → Pages**.
-4. Under Build and deployment, select **Deploy from a branch**.
-5. Choose `main` and `/(root)` and save.
-6. Open the published Pages URL.
-
 ## Notes / limitations
 
 - Internet connection is required to query TMDB and load the JSZip library (CDN) for ZIP downloads.
