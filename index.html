@@ -152,7 +152,7 @@ td:nth-child(3){color:var(--text)}
       <h2>Choose video files</h2>
       <input id="folderPath" type="text" readonly placeholder="No files selected. You can also drop files on the table." aria-label="Selected files">
       <div class="row">
-        <label class="button" for="folderInput" id="browseFolder">Browse folder</label>
+        <label class="button" for="folderInput">Browse folder</label>
         <label class="button" for="fileInput">Choose files</label>
         <button class="button ghost" id="clearFiles">Clear</button>
       </div>
@@ -247,14 +247,6 @@ if(c.length===1)return{srcDir:c[0].dir,fh:c[0].fh,name};
 for(const x of c){try{if((await x.fh.getFile()).size===f.size)return{srcDir:x.dir,fh:x.fh,name}}catch(e){}}}
 return null}
 function tagPath(f,root,segs){try{Object.defineProperty(f,"webkitRelativePath",{value:[root.name,...segs].join("/"),configurable:true})}catch(e){}}
-$("browseFolder").addEventListener("click",async e=>{if(!FS_OK||pickerBroken)return;e.preventDefault();
-let root;try{root=await showDirectoryPicker({mode:"readwrite"})}catch(err){if(err&&err.name==="AbortError")return;pickerBroken=true;setStatus("The folder picker was blocked ("+(err&&err.message||err)+"). Click Browse folder again to use the standard picker.","error");return}
-setStatus("Reading folder…");const files=[];let skipped=0;
-async function walk(dir,path){let list=[];try{for await(const [name,h] of dir.entries())list.push([name,h])}catch(err){skipped++;return}
-for(const [name,h] of list){if(h.kind==="directory"){await walk(h,path.concat(name))}else if(EXTENSIONS.has(fileExt(name))){try{const f=await h.getFile();tagPath(f,root,path.concat(name));files.push(f);if(files.length%50===0)setStatus(`Reading folder… ${files.length} video file(s) found`)}catch(err){skipped++}}}}
-try{await walk(root,[])}catch(err){setStatus("Could not read folder: "+err.message,"error");return}
-rootHandle=root;addFiles(files);
-setStatus(files.length?`${files.length} video file(s) loaded from "${root.name}" (including subfolders). Renaming in place won't ask for the folder again.`+(skipped?` ${skipped} item(s) could not be read.`:""):`No video files found in "${root.name}".`,files.length?"":"error")});
 
 /* ---- Output method: rename in place (recommended) or ZIP ---- */
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -287,7 +279,7 @@ let root=rootHandle;
 if(root){try{let p=await root.queryPermission({mode:"readwrite"});if(p!=="granted")p=await root.requestPermission({mode:"readwrite"});if(p!=="granted")root=null}catch(e){root=null}}
 const ix={map:null};
 if(root){for(const m of approved){if(!await resolveFile(root,m.file,ix)){root=null;break}}}
-if(!root){setStatus("Pick the folder that contains these files (subfolders are fine).");try{root=await showDirectoryPicker({mode:"readwrite"})}catch(e){if(e&&e.name==="AbortError"){setStatus("Rename cancelled. No files were changed.");return}setStatus("Could not open the folder: "+(e&&e.message||e)+" Chrome will not let sites open Downloads, Desktop or Documents directly; pick a subfolder inside them instead.","error");return}ix.map=null}
+if(!root){const hint=(approved.find(m=>m.file.webkitRelativePath)||{file:{webkitRelativePath:""}}).file.webkitRelativePath.split("/")[0];setStatus(hint?`Pick the folder "${hint}" you loaded (just once; it is remembered for this session).`:"Pick the folder that contains these files (just once; subfolders are fine).");try{root=await showDirectoryPicker({id:"tv-rename",mode:"readwrite"})}catch(e){if(e&&e.name==="AbortError"){setStatus("Rename cancelled. No files were changed.");return}setStatus("Could not open the folder: "+(e&&e.message||e)+" Chrome will not let sites open Downloads, Desktop or Documents directly; pick a subfolder inside them instead.","error");return}ix.map=null}
 rootHandle=root;
 setBusy(true,"Renaming…");P.start();setStatus(`Renaming ${approved.length} file(s)…`);
 let done=0;const failed=[];const replaced=new Map();
