@@ -66,6 +66,7 @@ input::placeholder{color:#66717f}
 .button.mode-zip:hover:not(:disabled){color:#1a0707;border-color:#ffb3b3;filter:brightness(1.08)}
 .modenote{font-size:11px;line-height:1.3;color:#8b95a3}
 .modenote.bad{color:#ff6b6b}
+.modenote{max-width:420px}
 .zipprog>i.done{background:#3ddc84;box-shadow:0 0 8px #3ddc84}
 .zipprog>i.err{background:#ff5c5c;box-shadow:0 0 8px #ff5c5c}
 #downloadArea.doneonly .dlrow,#downloadArea.doneonly .modenote{display:none}
@@ -234,6 +235,7 @@ $("includeTitles").onchange=()=>{if(matches.length)$("matchBtn").click()};
 /* Remember the chosen folder so renaming never has to ask for it again */
 let rootHandle=null;
 const FS_OK=(()=>{try{return !!window.showDirectoryPicker&&window.top===window.self}catch(e){return false}})();
+const FS_REASON=FS_OK?"":(!window.showDirectoryPicker?"In-place renaming needs Chrome, Edge or another Chromium browser.":"In-place renaming is blocked because this page is running inside another page (a preview or frame). Save index.html and open it directly in Chrome or Edge.");
 const dirAt=async(base,parts,create)=>{let d=base;for(const p of parts)d=await d.getDirectoryHandle(p,{create});return d};
 async function resolveFile(root,f){const rel=f.webkitRelativePath?f.webkitRelativePath.split("/"):[f.name];const name=rel[rel.length-1];for(const t of [rel.slice(1,-1),rel.slice(0,-1)]){try{const srcDir=await dirAt(root,t,false);const fh=await srcDir.getFileHandle(name);return{srcDir,fh,name}}catch(e){}}return null}
 function tagPath(f,root,segs){try{Object.defineProperty(f,"webkitRelativePath",{value:[root.name,...segs].join("/"),configurable:true})}catch(e){}}
@@ -251,13 +253,13 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const canRename=FS_OK;
 let mode=canRename?"rename":"zip",busy=false;
 const act=$("actionBtn"),modeEl=$("dlMode"),noteEl=$("modeNote");
-function updateUI(){modeEl.dataset.mode=mode;modeEl.querySelectorAll(".seg").forEach(b=>{const on=b.dataset.mode===mode;b.classList.toggle("active",on);b.setAttribute("aria-checked",on);b.disabled=busy||(b.dataset.mode==="rename"&&!canRename)});
+function updateUI(){modeEl.dataset.mode=mode;modeEl.querySelectorAll(".seg").forEach(b=>{const on=b.dataset.mode===mode;b.classList.toggle("active",on);b.setAttribute("aria-checked",on);b.disabled=busy});
 act.className="button mode-"+mode;act.disabled=busy;
 if(!busy)act.textContent=mode==="rename"?"Rename files in place":"Download approved files as ZIP";
 noteEl.className="modenote"+(mode==="zip"?" bad":"");
-noteEl.textContent=mode==="rename"?"Recommended. Renames your local files directly. Fast, nothing to re-download."+(canRename?"":" (Needs Chrome, Edge or another Chromium browser.)"):"Not recommended. Takes longer: copies every file into a new ZIP."+(canRename?"":" In-place renaming needs a Chromium browser.")}
+noteEl.textContent=(mode==="rename"?"Recommended. Renames your local files directly. Fast, nothing to re-download.":"Not recommended. Takes longer: copies every file into a new ZIP.")+(canRename?"":" "+FS_REASON)}
 function setBusy(b,label){busy=b;updateUI();if(b)act.textContent=label}
-modeEl.querySelectorAll(".seg").forEach(b=>b.onclick=()=>{if(busy)return;mode=b.dataset.mode;updateUI()});
+modeEl.querySelectorAll(".seg").forEach(b=>b.onclick=()=>{if(busy)return;if(b.dataset.mode==="rename"&&!canRename){setStatus(FS_REASON,"error");return}mode=b.dataset.mode;updateUI()});
 updateUI();
 act.onclick=()=>mode==="rename"?runRename():runZip();
 
@@ -272,7 +274,7 @@ fail(text){end(text,"err")}}})();
 
 /* ---- Rename approved files in place (File System Access API) ---- */
 async function runRename(){const approved=matches.filter(m=>m.status==="Matched"&&m.proposed);if(!approved.length)return;
-if(!FS_OK){setStatus("In-place renaming needs Chrome, Edge or another Chromium browser. Use the ZIP option instead.","error");return}
+if(!FS_OK){setStatus(FS_REASON,"error");return}
 let root=rootHandle;
 if(root){try{let p=await root.queryPermission({mode:"readwrite"});if(p!=="granted")p=await root.requestPermission({mode:"readwrite"});if(p!=="granted")root=null}catch(e){root=null}}
 if(root){for(const m of approved){if(!await resolveFile(root,m.file)){root=null;break}}}
