@@ -233,14 +233,22 @@ setStatus(grp?`Matching complete. ${grp} file(s) contain several episodes groupe
 $("includeTitles").onchange=()=>{if(matches.length)$("matchBtn").click()};
 
 /* Remember the chosen folder so renaming never has to ask for it again */
-let rootHandle=null;
+let rootHandle=null,pickerBroken=false;
 const FS_OK=(()=>{try{return !!window.showDirectoryPicker&&window.top===window.self}catch(e){return false}})();
 const FS_REASON=FS_OK?"":(!window.showDirectoryPicker?"In-place renaming needs Chrome, Edge or another Chromium browser.":"In-place renaming is blocked because this page is running inside another page (a preview or frame). Save index.html and open it directly in Chrome or Edge.");
 const dirAt=async(base,parts,create)=>{let d=base;for(const p of parts)d=await d.getDirectoryHandle(p,{create});return d};
-async function resolveFile(root,f){const rel=f.webkitRelativePath?f.webkitRelativePath.split("/"):[f.name];const name=rel[rel.length-1];for(const t of [rel.slice(1,-1),rel.slice(0,-1)]){try{const srcDir=await dirAt(root,t,false);const fh=await srcDir.getFileHandle(name);return{srcDir,fh,name}}catch(e){}}return null}
+async function buildIndex(root){const map=new Map();async function walk(d){let list=[];try{for await(const [n,h] of d.entries())list.push([n,h])}catch(e){return}
+for(const [n,h] of list){if(h.kind==="directory")await walk(h);else if(EXTENSIONS.has(fileExt(n))){if(!map.has(n))map.set(n,[]);map.get(n).push({dir:d,fh:h})}}}
+await walk(root);return map}
+async function resolveFile(root,f,ix){const rel=f.webkitRelativePath?f.webkitRelativePath.split("/"):[f.name];const name=rel[rel.length-1];
+for(const t of [rel.slice(1,-1),rel.slice(0,-1)]){try{const srcDir=await dirAt(root,t,false);const fh=await srcDir.getFileHandle(name);return{srcDir,fh,name}}catch(e){}}
+if(ix){if(!ix.map)ix.map=await buildIndex(root);const c=ix.map.get(name)||[];
+if(c.length===1)return{srcDir:c[0].dir,fh:c[0].fh,name};
+for(const x of c){try{if((await x.fh.getFile()).size===f.size)return{srcDir:x.dir,fh:x.fh,name}}catch(e){}}}
+return null}
 function tagPath(f,root,segs){try{Object.defineProperty(f,"webkitRelativePath",{value:[root.name,...segs].join("/"),configurable:true})}catch(e){}}
-$("browseFolder").addEventListener("click",async e=>{if(!FS_OK)return;e.preventDefault();
-let root;try{root=await showDirectoryPicker({mode:"readwrite"})}catch(err){if(err&&err.name==="AbortError")return;$("folderInput").click();return}
+$("browseFolder").addEventListener("click",async e=>{if(!FS_OK||pickerBroken)return;e.preventDefault();
+let root;try{root=await showDirectoryPicker({mode:"readwrite"})}catch(err){if(err&&err.name==="AbortError")return;pickerBroken=true;setStatus("The folder picker was blocked ("+(err&&err.message||err)+"). Click Browse folder again to use the standard picker.","error");return}
 setStatus("Reading folder…");const files=[];let skipped=0;
 async function walk(dir,path){let list=[];try{for await(const [name,h] of dir.entries())list.push([name,h])}catch(err){skipped++;return}
 for(const [name,h] of list){if(h.kind==="directory"){await walk(h,path.concat(name))}else if(EXTENSIONS.has(fileExt(name))){try{const f=await h.getFile();tagPath(f,root,path.concat(name));files.push(f);if(files.length%50===0)setStatus(`Reading folder… ${files.length} video file(s) found`)}catch(err){skipped++}}}}
@@ -277,14 +285,15 @@ async function runRename(){const approved=matches.filter(m=>m.status==="Matched"
 if(!FS_OK){setStatus(FS_REASON,"error");return}
 let root=rootHandle;
 if(root){try{let p=await root.queryPermission({mode:"readwrite"});if(p!=="granted")p=await root.requestPermission({mode:"readwrite"});if(p!=="granted")root=null}catch(e){root=null}}
-if(root){for(const m of approved){if(!await resolveFile(root,m.file)){root=null;break}}}
-if(!root){try{root=await showDirectoryPicker({mode:"readwrite"})}catch(e){if(e&&e.name!=="AbortError")setStatus("Could not open folder: "+e.message,"error");return}}
+const ix={map:null};
+if(root){for(const m of approved){if(!await resolveFile(root,m.file,ix)){root=null;break}}}
+if(!root){setStatus("Pick the folder that contains these files (subfolders are fine).");try{root=await showDirectoryPicker({mode:"readwrite"})}catch(e){if(e&&e.name==="AbortError"){setStatus("Rename cancelled. No files were changed.");return}setStatus("Could not open the folder: "+(e&&e.message||e)+" Chrome will not let sites open Downloads, Desktop or Documents directly; pick a subfolder inside them instead.","error");return}ix.map=null}
 rootHandle=root;
 setBusy(true,"Renaming…");P.start();setStatus(`Renaming ${approved.length} file(s)…`);
 let done=0;const failed=[];const replaced=new Map();
 const exists=async(d,n)=>{try{await d.getFileHandle(n);return true}catch(e){return false}};
 try{for(let i=0;i<approved.length;i++){const m=approved[i];const f=m.file;
-try{const r=await resolveFile(root,f);if(!r)throw new Error("not found in the chosen folder");const{srcDir,fh,name}=r;
+try{const r=await resolveFile(root,f,ix);if(!r)throw new Error("not found in the chosen folder or its subfolders");const{srcDir,fh,name}=r;
 const segs=m.proposed.split("/").filter(Boolean);let newName=segs.pop();const destDir=await dirAt(root,segs,true);
 if(await destDir.isSameEntry(srcDir)&&newName===name){done++}
 else{if(await exists(destDir,newName)){const dot=newName.lastIndexOf(".");const b=dot>0?newName.slice(0,dot):newName,x=dot>0?newName.slice(dot):"";let n=2;while(await exists(destDir,`${b} (${n})${x}`))n++;newName=`${b} (${n})${x}`}
@@ -293,7 +302,7 @@ if(!moved){const nf=await destDir.getFileHandle(newName,{create:true});const w=a
 const nfile=await(await destDir.getFileHandle(newName)).getFile();tagPath(nfile,root,[...segs,newName]);replaced.set(f,nfile);done++}}
 catch(err){failed.push((f.webkitRelativePath||f.name)+": "+err.message)}
 P.set((i+1)/approved.length*100);setStatus(`Renaming files… ${i+1}/${approved.length}`)}
-const summary=failed.length?`Done, but ${failed.length} of ${approved.length} file(s) could not be renamed. ${failed[0]}${failed.length>1?" (and more)":""}. If files weren't found, pick the folder that contains them.`:`Done! Renamed ${done} file(s) in place. Click Match again to re-check them.`;
+const summary=failed.length?`Done, but ${failed.length} of ${approved.length} file(s) could not be renamed. ${failed[0]}${failed.length>1?" (and more)":""}. If files weren't found, pick the folder that contains them. Chrome won't let sites open Downloads, Desktop or Documents directly, so move the files into a subfolder first.`:`Done! Renamed ${done} file(s) in place. Click Match again to re-check them.`;
 await P.finish(failed.length?`✗ Finished with errors: ${done} renamed, ${failed.length} failed`:`✓ Done! ${done} file(s) renamed in place`,!failed.length);
 selectedFiles=selectedFiles.map(f=>replaced.get(f)||f);renderFiles();clearMatchView();$("downloadArea").hidden=false;$("downloadArea").classList.add("doneonly");$("matchBtn").disabled=selectedFiles.length===0||episodes.length===0;
 setStatus(summary,failed.length?"error":"success")}
