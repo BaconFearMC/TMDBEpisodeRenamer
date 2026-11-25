@@ -151,7 +151,7 @@ td:nth-child(3){color:var(--text)}
       <h2>Choose video files</h2>
       <input id="folderPath" type="text" readonly placeholder="No files selected. You can also drop files on the table." aria-label="Selected files">
       <div class="row">
-        <label class="button" for="folderInput">Browse folder</label>
+        <label class="button" for="folderInput" id="browseFolder">Browse folder</label>
         <label class="button" for="fileInput">Choose files</label>
         <button class="button ghost" id="clearFiles">Clear</button>
       </div>
@@ -195,7 +195,7 @@ function renderFiles(){const n=selectedFiles.length;$("folderPath").value=n?`${n
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 $("fileInput").addEventListener("change",e=>{addFiles(e.target.files);e.target.value=""});
 $("folderInput").addEventListener("change",e=>{addFiles(e.target.files);e.target.value=""});
-$("clearFiles").onclick=()=>{selectedFiles=[];renderFiles();clearMatchView();$("matchBtn").disabled=true};
+$("clearFiles").onclick=()=>{rootHandle=null;selectedFiles=[];renderFiles();clearMatchView();$("matchBtn").disabled=true};
 const dz=$("dropzone");["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag")}));["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag")}));dz.addEventListener("drop",e=>addFiles(e.dataTransfer.files));
 async function tmdb(url){let key=$("apiKey").value.trim().replace(/^["']|["']$/g,"").replace(/^Bearer\s+/i,"");if(!key)throw new Error("Enter your TMDB API key first.");const isToken=key.length>40;const opts={headers:{accept:"application/json"}};if(isToken)opts.headers.Authorization="Bearer "+key;else url+=(url.includes("?")?"&":"?")+"api_key="+encodeURIComponent(key);let res;const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),15000);opts.signal=ctl.signal;try{res=await fetch(url,opts)}catch(e){throw new Error(e&&e.name==="AbortError"?"TMDB did not respond within 15 seconds. Check your connection and try again.":"Could not reach TMDB. Check your internet connection or any ad/privacy blocker.")}finally{clearTimeout(to)}if(!res.ok){let detail="";try{const j=await res.json();detail=j.status_message||""}catch{}if(res.status===401)throw new Error("TMDB rejected that key (401). Use the long API Read Access Token (not the short API Key) from themoviedb.org/settings/api. "+detail);throw new Error(`TMDB request failed (${res.status}) ${detail}`)}return res.json()}
 $("searchBtn").onclick=async()=>{const q=$("showSearch").value.trim();if(!q){setStatus("Enter a show name to search.");return} $("searchBtn").disabled=true;$("results").innerHTML="";selectedShow=null;$("loadEpisodesBtn").disabled=true;setStatus("Searching TMDB…");try{const data=await tmdb("https://api.themoviedb.org/3/search/tv?query="+encodeURIComponent(q));searchShows=data.results||[];if(!searchShows.length){setStatus("No TV shows found.");return}searchShows=searchShows.slice(0,12);searchShows.forEach((show,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`${show.name||"Untitled"} (${(show.first_air_date||"").slice(0,4)||"year unknown"})`;$("results").appendChild(o)});chooseShow(0);setStatus(`${searchShows.length} result(s). Choose the correct series.`)}catch(err){setStatus(err.message,"error")}finally{$("searchBtn").disabled=false}};
@@ -231,6 +231,18 @@ const ok=matches.filter(m=>m.status==="Matched").length,review=matches.length-ok
 setStatus(grp?`Matching complete. ${grp} file(s) contain several episodes grouped together; TMDB recognizes episodes individually.`:"Matching complete. Review the proposed filenames below.","success")};
 $("includeTitles").onchange=()=>{if(matches.length)$("matchBtn").click()};
 
+/* Remember the chosen folder so renaming never has to ask for it again */
+let rootHandle=null;
+const dirAt=async(base,parts,create)=>{let d=base;for(const p of parts)d=await d.getDirectoryHandle(p,{create});return d};
+async function resolveFile(root,f){const rel=f.webkitRelativePath?f.webkitRelativePath.split("/"):[f.name];const name=rel[rel.length-1];for(const t of [rel.slice(1,-1),rel.slice(0,-1)]){try{const srcDir=await dirAt(root,t,false);const fh=await srcDir.getFileHandle(name);return{srcDir,fh,name}}catch(e){}}return null}
+function tagPath(f,root,segs){try{Object.defineProperty(f,"webkitRelativePath",{value:[root.name,...segs].join("/"),configurable:true})}catch(e){}}
+$("browseFolder").addEventListener("click",async e=>{if(!window.showDirectoryPicker)return;e.preventDefault();
+let root;try{root=await showDirectoryPicker({mode:"readwrite"})}catch(err){if(err&&err.name!=="AbortError")setStatus("Could not open folder: "+err.message,"error");return}
+setStatus("Reading folder…");const files=[];
+async function walk(dir,path){for await(const [name,h] of dir.entries()){if(h.kind==="directory")await walk(h,path.concat(name));else if(EXTENSIONS.has(fileExt(name))){const f=await h.getFile();tagPath(f,root,path.concat(name));files.push(f)}}}
+try{await walk(root,[])}catch(err){setStatus("Could not read folder: "+err.message,"error");return}
+rootHandle=root;addFiles(files);setStatus(files.length?`${files.length} video file(s) loaded from "${root.name}". Renaming in place won't ask for the folder again.`:`No video files found in "${root.name}".`,files.length?"":"error")});
+
 /* ---- Output method: rename in place (recommended) or ZIP ---- */
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const canRename=!!window.showDirectoryPicker;
@@ -258,21 +270,22 @@ fail(text){end(text,"err")}}})();
 /* ---- Rename approved files in place (File System Access API) ---- */
 async function runRename(){const approved=matches.filter(m=>m.status==="Matched"&&m.proposed);if(!approved.length)return;
 if(!window.showDirectoryPicker){setStatus("In-place renaming needs Chrome, Edge or another Chromium browser. Use the ZIP option instead.","error");return}
-let root;try{root=await showDirectoryPicker({mode:"readwrite"})}catch(e){return}
+let root=rootHandle;
+if(root){try{let p=await root.queryPermission({mode:"readwrite"});if(p!=="granted")p=await root.requestPermission({mode:"readwrite"});if(p!=="granted")root=null}catch(e){root=null}}
+if(root){for(const m of approved){if(!await resolveFile(root,m.file)){root=null;break}}}
+if(!root){try{root=await showDirectoryPicker({mode:"readwrite"})}catch(e){if(e&&e.name!=="AbortError")setStatus("Could not open folder: "+e.message,"error");return}}
+rootHandle=root;
 setBusy(true,"Renaming…");P.start();setStatus(`Renaming ${approved.length} file(s)…`);
 let done=0;const failed=[];const replaced=new Map();
-const dirAt=async(base,parts,create)=>{let d=base;for(const p of parts)d=await d.getDirectoryHandle(p,{create});return d};
 const exists=async(d,n)=>{try{await d.getFileHandle(n);return true}catch(e){return false}};
 try{for(let i=0;i<approved.length;i++){const m=approved[i];const f=m.file;
-try{const rel=f.webkitRelativePath?f.webkitRelativePath.split("/"):[f.name];const name=rel[rel.length-1];let srcDir,fh,found=false;
-for(const t of [rel.slice(1,-1),rel.slice(0,-1)]){try{srcDir=await dirAt(root,t,false);fh=await srcDir.getFileHandle(name);found=true;break}catch(e){}}
-if(!found)throw new Error("not found in the chosen folder");
+try{const r=await resolveFile(root,f);if(!r)throw new Error("not found in the chosen folder");const{srcDir,fh,name}=r;
 const segs=m.proposed.split("/").filter(Boolean);let newName=segs.pop();const destDir=await dirAt(root,segs,true);
 if(await destDir.isSameEntry(srcDir)&&newName===name){done++}
 else{if(await exists(destDir,newName)){const dot=newName.lastIndexOf(".");const b=dot>0?newName.slice(0,dot):newName,x=dot>0?newName.slice(dot):"";let n=2;while(await exists(destDir,`${b} (${n})${x}`))n++;newName=`${b} (${n})${x}`}
 let moved=false;if(typeof fh.move==="function"){try{await fh.move(destDir,newName);moved=true}catch(e){}}
 if(!moved){const nf=await destDir.getFileHandle(newName,{create:true});const w=await nf.createWritable();await w.write(await fh.getFile());await w.close();await srcDir.removeEntry(name)}
-replaced.set(f,await(await destDir.getFileHandle(newName)).getFile());done++}}
+const nfile=await(await destDir.getFileHandle(newName)).getFile();tagPath(nfile,root,[...segs,newName]);replaced.set(f,nfile);done++}}
 catch(err){failed.push((f.webkitRelativePath||f.name)+": "+err.message)}
 P.set((i+1)/approved.length*100);setStatus(`Renaming files… ${i+1}/${approved.length}`)}
 const summary=failed.length?`Done, but ${failed.length} of ${approved.length} file(s) could not be renamed. ${failed[0]}${failed.length>1?" (and more)":""}. If files weren't found, pick the folder that contains them.`:`Done! Renamed ${done} file(s) in place. Click Match again to re-check them.`;
