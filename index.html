@@ -6,7 +6,8 @@
 <meta name="description" content="Rename TV episode files in your browser using TMDB episode data. Your files stay on your device.">
 <meta name="theme-color" content="#12161d">
 <title>TMDB Episode Renamer</title>
-<link rel="icon" id="favicon" href="assets/favicon.svg">
+<link rel="icon" id="favicon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2312161d'/%3E%3Crect x='3' y='3' width='58' height='58' rx='11' fill='none' stroke='%234f9bff' stroke-opacity='.35' stroke-width='2'/%3E%3Cpath d='M32 8 56 32 32 56 8 32Z' fill='%234f9bff'/%3E%3Cpath d='M32 18 46 32 32 46 18 32Z' fill='%23cfe4ff'/%3E%3Cpath d='M28 25.5v13l11-6.5Z' fill='%2312161d'/%3E%3C/svg%3E">
+<link rel="icon" id="faviconPng" type="image/png" sizes="32x32" href="data:image/png;base64,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">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -185,18 +186,15 @@ td:nth-child(3){color:var(--text)}
     <span id="downloadArea" hidden><span class="zipwrap"><span class="dlrow"><span class="dlmode" id="dlMode" data-mode="rename" role="radiogroup" aria-label="Output method"><span class="thumb"></span><button type="button" class="seg active" data-mode="rename" role="radio" aria-checked="true">Rename in place</button><button type="button" class="seg" data-mode="zip" role="radio" aria-checked="false">ZIP</button></span><button class="button mode-rename" id="actionBtn">Rename files in place</button></span><small class="modenote" id="modeNote"></small><span class="zipprog" id="zipProg" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="zipProgFill"></i></span><span class="zipmsg" id="zipMsg" role="status" aria-live="polite"></span></span></span>
   </footer>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 /* ===== Output-mode toggle =====
    1 = simple: ZIP only, light blue button, no "not recommended" warning, "Rename in place" hidden
    0 = full:   slider with "Rename in place" + ZIP (red, with warning) */
 const SIMPLE_ZIP = 1;
 document.body.classList.toggle("simple-zip", SIMPLE_ZIP === 1);
-/* Favicon: use assets/favicon.svg; only if it fails to load, fall back to a built-in icon */
-(function(){const link=document.getElementById("favicon");if(!link)return;
-const FALLBACK={svg:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2312161d'/%3E%3Crect x='3' y='3' width='58' height='58' rx='11' fill='none' stroke='%234f9bff' stroke-opacity='.35' stroke-width='2'/%3E%3Cpath d='M32 8 56 32 32 56 8 32Z' fill='%234f9bff'/%3E%3Cpath d='M32 18 46 32 32 46 18 32Z' fill='%23cfe4ff'/%3E%3Cpath d='M28 25.5v13l11-6.5Z' fill='%2312161d'/%3E%3C/svg%3E",png:"data:image/png;base64,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"};
-const img=new Image();img.onerror=()=>{link.type="image/svg+xml";link.href=FALLBACK.svg;const p=document.createElement("link");p.rel="icon";p.type="image/png";p.sizes="32x32";p.href=FALLBACK.png;document.head.appendChild(p)};
-img.src=link.getAttribute("href")})();
+/* Favicon: a built-in icon is always set; if assets/favicon.svg loads, it replaces it */
+(function(){const link=document.getElementById("favicon"),png=document.getElementById("faviconPng");if(!link)return;
+const img=new Image();img.onload=()=>{link.type="image/svg+xml";link.href="assets/favicon.svg";if(png)png.remove()};img.src="assets/favicon.svg"})();
 const EXTENSIONS = new Set([".mkv",".mp4",".avi",".mov",".wmv",".m4v",".ts",".webm",".mpg",".mpeg"]);
 const $ = id => document.getElementById(id);
 let selectedFiles=[], searchShows=[], selectedShow=null, episodes=[], matches=[];
@@ -314,19 +312,54 @@ setStatus(summary,failed.length?"error":"success")}
 catch(err){P.fail("✗ Renaming failed: "+err.message);setStatus("Renaming failed: "+err.message,"error")}
 finally{setBusy(false)}}
 
-/* ---- ZIP (slower: copies every file) ---- */
+/* ---- ZIP: memory-safe. Files are only read in 8 MB pieces to compute CRCs; the ZIP itself is a Blob that points at your files, so nothing big is held in RAM. Uses ZIP64 for files/archives over 4 GB. ---- */
+const Z64_AT=window.__Z64_AT||0xFFFFFFFF;
+const CRC_T0=(()=>{const t=new Int32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c}return t})();
+const CRC_TS=(()=>{const T=new Int32Array(2048);T.set(CRC_T0,0);for(let n=0;n<256;n++){let c=CRC_T0[n];for(let k=1;k<8;k++){c=CRC_T0[c&255]^(c>>>8);T[k*256+n]=c}}return T})();
+function crcUpdate(c,u){let i=0;const n=u.length,e=n-(n&7),T=CRC_TS;c|=0;
+for(;i<e;i+=8){const a=c^(u[i]|u[i+1]<<8|u[i+2]<<16|u[i+3]<<24);c=T[1792+(a&255)]^T[1536+((a>>>8)&255)]^T[1280+((a>>>16)&255)]^T[1024+(a>>>24)]^T[768+u[i+4]]^T[512+u[i+5]]^T[256+u[i+6]]^T[u[i+7]]}
+for(;i<n;i++)c=CRC_T0[(c^u[i])&255]^(c>>>8);return c>>>0}
+function dosDT(ms){const d=new Date(ms||Date.now()),y=Math.max(1980,d.getFullYear());return{dt:(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),dd:((y-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate()}}
 async function runZip(){const approved=matches.filter(m=>m.status==="Matched"&&m.proposed);if(!approved.length)return;
-if(!window.JSZip){setStatus("ZIP library did not load. Refresh this page while connected to the internet and try again.","error");return}
 const totalBytes=approved.reduce((a,m)=>a+m.file.size,0);setBusy(true,"Preparing ZIP…");P.start(totalBytes,"compiled");
-try{const zip=new JSZip();const usedNames=new Set();
-for(let i=0;i<approved.length;i++){const m=approved[i];let name=m.proposed;if(usedNames.has(name)){const dot=name.lastIndexOf(".");name=(dot>0?name.slice(0,dot):name)+` (${i+1})`+(dot>0?name.slice(dot):"")}usedNames.add(name);zip.file(name,m.file);setStatus(`Adding files to ZIP… ${i+1}/${approved.length}`);if(i%10===9)await sleep(0)}
-const blob=await zip.generateAsync({type:"blob"},meta=>{P.set(meta.percent);if(meta.percent%20<1)setStatus(`Building ZIP… ${Math.round(meta.percent)}%`)});
+try{const enc=new TextEncoder(),CH=8*1024*1024,parts=[],cdRecs=[],used=new Set();let offset=0,done=0;
+for(let i=0;i<approved.length;i++){const m=approved[i],f=m.file;let name=m.proposed;
+if(used.has(name)){const dot=name.lastIndexOf(".");name=(dot>0?name.slice(0,dot):name)+` (${i+1})`+(dot>0?name.slice(dot):"")}used.add(name);
+const nb=enc.encode(name),size=f.size,big=size>=Z64_AT,{dt,dd}=dosDT(f.lastModified),localOff=offset;
+setStatus(`Building ZIP… file ${i+1}/${approved.length}`);
+/* local header (sizes/CRC come after the data, in a data descriptor) */
+const lhLen=30+nb.length+(big?20:0),lb=new Uint8Array(lhLen),lv=new DataView(lb.buffer);
+lv.setUint32(0,0x04034b50,true);lv.setUint16(4,big?45:20,true);lv.setUint16(6,0x0808,true);lv.setUint16(8,0,true);lv.setUint16(10,dt,true);lv.setUint16(12,dd,true);
+lv.setUint32(14,0,true);lv.setUint32(18,big?0xFFFFFFFF:0,true);lv.setUint32(22,big?0xFFFFFFFF:0,true);lv.setUint16(26,nb.length,true);lv.setUint16(28,big?20:0,true);lb.set(nb,30);
+if(big){const o=30+nb.length;lv.setUint16(o,1,true);lv.setUint16(o+2,16,true);lv.setBigUint64(o+4,0n,true);lv.setBigUint64(o+12,0n,true)}
+/* CRC pass over the file in chunks */
+let crc=0xFFFFFFFF;for(let off=0;off<size;off+=CH){const buf=new Uint8Array(await f.slice(off,Math.min(size,off+CH)).arrayBuffer());crc=crcUpdate(crc,buf);done+=buf.length;P.set(totalBytes?done/totalBytes*100:0)}
+crc=(crc^0xFFFFFFFF)>>>0;
+/* data descriptor */
+const dl=big?24:16,db=new Uint8Array(dl),dv=new DataView(db.buffer);dv.setUint32(0,0x08074b50,true);dv.setUint32(4,crc,true);
+if(big){dv.setBigUint64(8,BigInt(size),true);dv.setBigUint64(16,BigInt(size),true)}else{dv.setUint32(8,size,true);dv.setUint32(12,size,true)}
+parts.push(lb,f,db);offset+=lhLen+size+dl;
+/* central directory record */
+const needOff=localOff>=Z64_AT,ex=[];if(big)ex.push(size,size);if(needOff)ex.push(localOff);const exLen=ex.length?4+ex.length*8:0;
+const cb=new Uint8Array(46+nb.length+exLen),cv=new DataView(cb.buffer);
+cv.setUint32(0,0x02014b50,true);cv.setUint16(4,45,true);cv.setUint16(6,(big||needOff)?45:20,true);cv.setUint16(8,0x0808,true);cv.setUint16(10,0,true);cv.setUint16(12,dt,true);cv.setUint16(14,dd,true);
+cv.setUint32(16,crc,true);cv.setUint32(20,big?0xFFFFFFFF:size,true);cv.setUint32(24,big?0xFFFFFFFF:size,true);cv.setUint16(28,nb.length,true);cv.setUint16(30,exLen,true);
+cv.setUint16(32,0,true);cv.setUint16(34,0,true);cv.setUint16(36,0,true);cv.setUint32(38,0,true);cv.setUint32(42,needOff?0xFFFFFFFF:localOff,true);cb.set(nb,46);
+if(exLen){let o=46+nb.length;cv.setUint16(o,1,true);cv.setUint16(o+2,ex.length*8,true);o+=4;for(const v of ex){cv.setBigUint64(o,BigInt(v),true);o+=8}}
+cdRecs.push(cb)}
+const cdStart=offset;let cdSize=0;for(const c of cdRecs){parts.push(c);cdSize+=c.length}offset+=cdSize;
+const n=cdRecs.length,z64=n>=0xFFFF||cdStart>=Z64_AT||cdSize>=Z64_AT;
+if(z64){const zb=new Uint8Array(56+20),zv=new DataView(zb.buffer);
+zv.setUint32(0,0x06064b50,true);zv.setBigUint64(4,44n,true);zv.setUint16(12,45,true);zv.setUint16(14,45,true);zv.setUint32(16,0,true);zv.setUint32(20,0,true);zv.setBigUint64(24,BigInt(n),true);zv.setBigUint64(32,BigInt(n),true);zv.setBigUint64(40,BigInt(cdSize),true);zv.setBigUint64(48,BigInt(cdStart),true);
+zv.setUint32(56,0x07064b50,true);zv.setUint32(60,0,true);zv.setBigUint64(64,BigInt(offset),true);zv.setUint32(72,1,true);parts.push(zb)}
+const eb=new Uint8Array(22),ev=new DataView(eb.buffer);ev.setUint32(0,0x06054b50,true);ev.setUint16(4,0,true);ev.setUint16(6,0,true);
+ev.setUint16(8,z64?0xFFFF:n,true);ev.setUint16(10,z64?0xFFFF:n,true);ev.setUint32(12,z64?0xFFFFFFFF:cdSize,true);ev.setUint32(16,z64?0xFFFFFFFF:cdStart,true);ev.setUint16(20,0,true);parts.push(eb);
+const blob=new Blob(parts,{type:"application/zip"});
 await P.finish(`✓ Done! 100% · ${fmtBytes(totalBytes)} of ${fmtBytes(totalBytes)} compiled (${approved.length} file(s)). Your download is starting.`);
-const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(selectedShow.name||"Renamed Episodes").replace(/[<>:"/\\|?*]/g,"-")+" - Renamed.zip";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(selectedShow.name||"Renamed Episodes").replace(/[<>:"/\\|?*]/g,"-")+" - Renamed.zip";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),600000);
 setStatus(`Done! ZIP created with ${approved.length} renamed file(s). Your original files were not modified.`,"success")}
 catch(err){P.fail("✗ ZIP creation failed: "+err.message);setStatus("ZIP creation failed: "+err.message,"error")}
 finally{setBusy(false)}}
-
 
 /* Snake that circles the window border */
 (function(){const cv=$("snake"),cx=cv.getContext("2d");let W=0,H=0,dpr=1,d=0,last=0,mult=1;const INSET=9,GAP=15,LEN=56,SPEED=matchMedia("(prefers-reduced-motion: reduce)").matches?0:280;
